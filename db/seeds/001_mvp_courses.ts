@@ -440,6 +440,501 @@ export async function seed(knex: Knex): Promise<void> {
       .insert(assignments)
       .onConflict(['level_id', 'order_index'])
       .merge();
+
+    // CSS Beginner content (MVP)
+    const cssLevel1 = await trx('levels')
+      .select('id')
+      .where({ course_id: cssCourse.id, slug: 'getting-started' })
+      .first();
+    const cssLevel2 = await trx('levels')
+      .select('id')
+      .where({ course_id: cssCourse.id, slug: 'selectors' })
+      .first();
+
+    if (!cssLevel1?.id || !cssLevel2?.id) return;
+
+    const cssLessons = [
+      {
+        level_id: cssLevel1.id,
+        title: 'What Is CSS?',
+        slug: 'what-is-css',
+        goal: 'Understand what CSS is and how it styles HTML.',
+        explanation:
+          'CSS (Cascading Style Sheets) controls how HTML looks—colors, spacing, fonts, and layout. You can style elements using inline styles, a style tag, or an external stylesheet.',
+        example_code: `<h1 style="color: teal;">Hello CSS!</h1>
+<p style="background-color: #ffeaa7;">This paragraph has a background.</p>`,
+        order_index: 1,
+      },
+      {
+        level_id: cssLevel1.id,
+        title: 'Fonts and Text Styling',
+        slug: 'fonts-and-text-styling',
+        goal: 'Style text with font size, alignment, color, and font family.',
+        explanation:
+          'You can style text using properties like font-size, text-align, color, and font-family. These help make your page look clean and readable.',
+        example_code: `<h1 style="font-size: 40px; text-align: center;">About Me</h1>
+<p style="color: #2d3436; font-family: Arial, sans-serif;">Text can be styled!</p>`,
+        order_index: 2,
+      },
+      {
+        level_id: cssLevel1.id,
+        title: 'Borders and Spacing',
+        slug: 'borders-and-spacing',
+        goal: 'Use borders, padding, margin, and width to shape layouts.',
+        explanation:
+          'Borders show outlines. Padding adds space inside an element. Margin adds space outside. Width controls how wide an element is.',
+        example_code: `<div style="border: 2px solid #0984e3; padding: 16px; margin: 16px; width: 300px;">
+  Profile card content
+</div>`,
+        order_index: 3,
+      },
+      {
+        level_id: cssLevel1.id,
+        title: 'Backgrounds and Images',
+        slug: 'backgrounds-and-images',
+        goal: 'Add backgrounds and style images with width and rounded corners.',
+        explanation:
+          'Background colors make sections stand out. Images can be styled too—change width and use border-radius to round the corners.',
+        example_code: `<div style="background-color: #dfe6e9; padding: 16px;">
+  <img src="animal.jpg" alt="Animal" style="width: 200px; border-radius: 12px;" />
+</div>`,
+        order_index: 4,
+      },
+      {
+        level_id: cssLevel1.id,
+        title: 'Building a Simple Styled Webpage',
+        slug: 'building-a-simple-styled-webpage',
+        goal: 'Combine CSS basics to create a mini profile webpage.',
+        explanation:
+          'A polished webpage uses multiple styles together: text styling, spacing, borders, background colors, and image styling. Practice combining everything into one page.',
+        example_code: `<!doctype html>
+<html>
+  <head>
+    <title>Styled Profile</title>
+  </head>
+  <body style="background-color: #f1f2f6;">
+    <div style="border: 2px solid #2d3436; padding: 16px; margin: 24px; background-color: white; width: 360px;">
+      <h1 style="text-align: center; color: #6c5ce7;">Your Name</h1>
+      <p style="color: #2d3436; font-family: Arial, sans-serif;">A little about me.</p>
+      <img src="me.jpg" alt="Me" style="width: 200px; border-radius: 12px;" />
+    </div>
+  </body>
+</html>`,
+        order_index: 5,
+      },
+    ];
+
+    await trx('lessons')
+      .insert(cssLessons)
+      .onConflict(['level_id', 'slug'])
+      .merge();
+
+    const cssLessonRows = await trx('lessons')
+      .select('id', 'slug')
+      .where({ level_id: cssLevel1.id })
+      .whereIn('slug', [
+        'what-is-css',
+        'fonts-and-text-styling',
+        'borders-and-spacing',
+        'backgrounds-and-images',
+        'building-a-simple-styled-webpage',
+      ]);
+
+    const cssLessonIdBySlug = new Map(cssLessonRows.map((r) => [r.slug, r.id]));
+
+    const cssClassworks = [
+      {
+        lesson_slug: 'what-is-css',
+        title: 'Create a colorful webpage.',
+        instructions:
+          'Create an HTML page and add inline CSS styles to make it colorful.',
+        requirements: {
+          items: [
+            'Add a heading',
+            'Change the heading color',
+            'Add a paragraph',
+            'Change the paragraph background color',
+          ],
+        },
+        test_config: {
+          runner: 'jest',
+          checks: [
+            { id: 'has_h1', description: 'Has h1', selector: 'h1' },
+            { id: 'has_p', description: 'Has p', selector: 'p' },
+            {
+              id: 'h1_has_color',
+              description: 'Heading has color styling',
+              rule: 'style',
+              selector: 'h1',
+              property: 'color',
+            },
+            {
+              id: 'p_has_bg',
+              description: 'Paragraph has background-color styling',
+              rule: 'style',
+              selector: 'p',
+              property: 'background-color',
+            },
+          ],
+        },
+        starter_code: `<!doctype html>
+<html>
+  <head>
+    <title>Colorful Page</title>
+  </head>
+  <body>
+    <h1 style=""></h1>
+    <p style=""></p>
+  </body>
+</html>`,
+        order_index: 1,
+      },
+      {
+        lesson_slug: 'fonts-and-text-styling',
+        title: 'Style an About Me page.',
+        instructions:
+          'Add a heading and paragraph and style them using CSS text properties.',
+        requirements: {
+          items: [
+            'Add a heading',
+            'Change the font size',
+            'Center the heading',
+            'Change paragraph text color',
+            'Use a different font family',
+          ],
+        },
+        test_config: {
+          runner: 'jest',
+          checks: [
+            {
+              id: 'h1_font_size',
+              description: 'Heading has font-size',
+              rule: 'style',
+              selector: 'h1',
+              property: 'font-size',
+            },
+            {
+              id: 'h1_text_align',
+              description: 'Heading uses text-align',
+              rule: 'style',
+              selector: 'h1',
+              property: 'text-align',
+            },
+            {
+              id: 'p_color',
+              description: 'Paragraph uses color',
+              rule: 'style',
+              selector: 'p',
+              property: 'color',
+            },
+            {
+              id: 'p_font_family',
+              description: 'Paragraph uses font-family',
+              rule: 'style',
+              selector: 'p',
+              property: 'font-family',
+            },
+          ],
+        },
+        starter_code: `<h1 style=""></h1>
+<p style=""></p>`,
+        order_index: 1,
+      },
+      {
+        lesson_slug: 'borders-and-spacing',
+        title: 'Create a profile card.',
+        instructions:
+          'Create a card container and style it using border, padding, margin, and width.',
+        requirements: {
+          items: ['Add a border', 'Add padding', 'Add margin', 'Set a width'],
+        },
+        test_config: {
+          runner: 'jest',
+          checks: [
+            {
+              id: 'border',
+              description: 'Element has border',
+              rule: 'style',
+              selector: '.card, #card, div',
+              property: 'border',
+            },
+            {
+              id: 'padding',
+              description: 'Element has padding',
+              rule: 'style',
+              selector: '.card, #card, div',
+              property: 'padding',
+            },
+            {
+              id: 'margin',
+              description: 'Element has margin',
+              rule: 'style',
+              selector: '.card, #card, div',
+              property: 'margin',
+            },
+            {
+              id: 'width',
+              description: 'Element has width',
+              rule: 'style',
+              selector: '.card, #card, div',
+              property: 'width',
+            },
+          ],
+        },
+        starter_code: `<div class="card" style="">
+  <h1></h1>
+  <p></p>
+</div>`,
+        order_index: 1,
+      },
+      {
+        lesson_slug: 'backgrounds-and-images',
+        title: 'Style a favorite animal page.',
+        instructions:
+          'Add a background color and style an image with width and rounded corners.',
+        requirements: {
+          items: [
+            'Add a background color',
+            'Style an image',
+            'Add rounded corners to image',
+            'Change image width',
+          ],
+        },
+        test_config: {
+          runner: 'jest',
+          checks: [
+            {
+              id: 'bg',
+              description: 'Has background-color',
+              rule: 'style',
+              selector: 'body, .container, div',
+              property: 'background-color',
+            },
+            {
+              id: 'img_width',
+              description: 'Image has width styling',
+              rule: 'style',
+              selector: 'img',
+              property: 'width',
+            },
+            {
+              id: 'img_radius',
+              description: 'Image has border-radius',
+              rule: 'style',
+              selector: 'img',
+              property: 'border-radius',
+            },
+          ],
+        },
+        starter_code: `<!doctype html>
+<html>
+  <head>
+    <title>Favorite Animal</title>
+  </head>
+  <body style="">
+    <h1></h1>
+    <img src="" alt="" style="" />
+    <p></p>
+  </body>
+</html>`,
+        order_index: 1,
+      },
+      {
+        lesson_slug: 'building-a-simple-styled-webpage',
+        title: 'Build a mini profile webpage.',
+        instructions:
+          'Build a mini profile webpage with multiple CSS styles: spacing, border, background color, and styled content.',
+        requirements: {
+          items: [
+            'Styled heading',
+            'Styled paragraph',
+            'Styled image',
+            'Border around content',
+            'Background color',
+            'Proper spacing',
+          ],
+        },
+        test_config: {
+          runner: 'jest',
+          checks: [
+            {
+              id: 'h1_styling',
+              description: 'Heading has styling',
+              rule: 'hasStyleAttributeOrRule',
+              selector: 'h1',
+            },
+            {
+              id: 'p_styling',
+              description: 'Paragraph has styling',
+              rule: 'hasStyleAttributeOrRule',
+              selector: 'p',
+            },
+            {
+              id: 'img_styling',
+              description: 'Image has styling',
+              rule: 'hasStyleAttributeOrRule',
+              selector: 'img',
+            },
+            {
+              id: 'border_exists',
+              description: 'Border exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'border',
+            },
+            {
+              id: 'padding_exists',
+              description: 'Padding exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'padding',
+            },
+            {
+              id: 'bg_exists',
+              description: 'Background color exists',
+              rule: 'style',
+              selector: 'body, .container, #container, div',
+              property: 'background-color',
+            },
+          ],
+        },
+        starter_code: `<!doctype html>
+<html>
+  <head>
+    <title>Mini Profile</title>
+  </head>
+  <body style="">
+    <div class="container" style="">
+      <h1 style=""></h1>
+      <p style=""></p>
+      <img src="" alt="" style="" />
+    </div>
+  </body>
+</html>`,
+        order_index: 1,
+      },
+    ];
+
+    const cssClassworkRows = cssClassworks
+      .map((c) => {
+        const lessonId = cssLessonIdBySlug.get(c.lesson_slug);
+        if (!lessonId) return null;
+        const { lesson_slug: _lesson_slug, ...rest } = c;
+        return { lesson_id: lessonId, ...rest };
+      })
+      .filter((x): x is NonNullable<typeof x> => Boolean(x));
+
+    await trx('classworks')
+      .insert(cssClassworkRows)
+      .onConflict(['lesson_id', 'order_index'])
+      .merge();
+
+    const cssAssignments = [
+      {
+        level_id: cssLevel2.id,
+        title: 'Superhero Profile Page',
+        instructions:
+          'Create a superhero profile page and style it with CSS (text styling, spacing, and a bordered container).',
+        requirements: {
+          items: [
+            'Add a main heading',
+            'Style the heading (color/size/alignment)',
+            'Add at least one paragraph and style it',
+            'Add a bordered container with padding',
+          ],
+        },
+        starter_code: `<!doctype html>
+<html>
+  <head>
+    <title>Superhero Profile</title>
+  </head>
+  <body>
+  </body>
+</html>`,
+        test_config: {
+          runner: 'jest',
+          checks: [
+            { id: 'has_h1', description: 'Has h1', selector: 'h1' },
+            {
+              id: 'h1_styling',
+              description: 'Heading has styling',
+              rule: 'hasStyleAttributeOrRule',
+              selector: 'h1',
+            },
+            {
+              id: 'container_border',
+              description: 'Border exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'border',
+            },
+            {
+              id: 'container_padding',
+              description: 'Padding exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'padding',
+            },
+          ],
+        },
+        order_index: 1,
+      },
+      {
+        level_id: cssLevel2.id,
+        title: 'My Dream Bedroom',
+        instructions:
+          'Create a webpage describing your dream bedroom and style it with background colors, borders, and spacing.',
+        requirements: {
+          items: [
+            'Add a heading and paragraph',
+            'Use at least one background color',
+            'Add a border around content',
+            'Add spacing with padding and margin',
+          ],
+        },
+        starter_code: `<!doctype html>
+<html>
+  <head>
+    <title>My Dream Bedroom</title>
+  </head>
+  <body>
+  </body>
+</html>`,
+        test_config: {
+          runner: 'jest',
+          checks: [
+            { id: 'has_h1', description: 'Has h1', selector: 'h1' },
+            {
+              id: 'bg_exists',
+              description: 'Background color exists',
+              rule: 'style',
+              selector: 'body, .container, #container, div',
+              property: 'background-color',
+            },
+            {
+              id: 'border_exists',
+              description: 'Border exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'border',
+            },
+            {
+              id: 'padding_exists',
+              description: 'Padding exists',
+              rule: 'style',
+              selector: '.container, #container, div',
+              property: 'padding',
+            },
+          ],
+        },
+        order_index: 2,
+      },
+    ];
+
+    await trx('assignments')
+      .insert(cssAssignments)
+      .onConflict(['level_id', 'order_index'])
+      .merge();
   });
 }
 
