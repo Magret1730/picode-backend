@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsString()
@@ -17,9 +17,5 @@ export class RegisterDto {
   @IsString()
   @MaxLength(32)
   ageGroup!: string;
-
-  @IsOptional()
-  @IsIn(['student', 'admin'])
-  role?: 'student' | 'admin';
 }
 

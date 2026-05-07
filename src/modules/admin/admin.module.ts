@@ -8,6 +8,8 @@ import { AdminClassworksRepository } from './classworks/admin-classworks.reposit
 import { AdminAssignmentsController } from './assignments/admin-assignments.controller';
 import { AdminAssignmentsService } from './assignments/admin-assignments.service';
 import { AdminAssignmentsRepository } from './assignments/admin-assignments.repository';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Module({
   controllers: [
@@ -22,6 +24,8 @@ import { AdminAssignmentsRepository } from './assignments/admin-assignments.repo
     AdminClassworksRepository,
     AdminAssignmentsService,
     AdminAssignmentsRepository,
+    RolesGuard,
+    JwtAuthGuard,
   ],
 })
 export class AdminModule {}

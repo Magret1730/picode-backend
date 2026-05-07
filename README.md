@@ -75,8 +75,10 @@ Copy `.env.example` → `.env` and fill in values.
 
 ### Admin (MVP)
 
-- **`ADMIN_KEY`**: admin header key (default `dev-admin`)
-  - Requests must include header: `X-Admin-Key: <ADMIN_KEY>`
+Admin APIs are protected by **JWT auth** + **role-based access control**.
+
+- Users must send `Authorization: Bearer <token>`
+- Only `user.role === "admin"` can access `/admin/*`
 
 ## Install
 
@@ -185,7 +187,10 @@ Notes:
 
 ### Admin (MVP)
 
-All admin endpoints require header `X-Admin-Key: <ADMIN_KEY>`.
+All admin endpoints require:
+
+- `Authorization: Bearer <token>`
+- user role = `admin`
 
 - Lessons:
   - `GET /admin/lessons`

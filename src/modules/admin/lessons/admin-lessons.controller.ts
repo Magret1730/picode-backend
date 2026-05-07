@@ -9,12 +9,15 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { AdminGuard } from '../guards/admin.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../../auth/guards/roles.guard';
 import { AdminLessonsService } from './admin-lessons.service';
 import { CreateLessonDto, UpdateLessonDto } from './lesson.dto';
 
 @Controller('admin/lessons')
-@UseGuards(AdminGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class AdminLessonsController {
   constructor(private readonly lessons: AdminLessonsService) {}
 
