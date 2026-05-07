@@ -8,6 +8,20 @@ import type { CreateAssignmentDto, UpdateAssignmentDto } from './assignment.dto'
 export class AdminAssignmentsRepository {
   constructor(@Inject(KNEX) private readonly knex: Knex) {}
 
+  async list(): Promise<Assignment[]> {
+    return await this.knex<Assignment>('assignments')
+      .select('*')
+      .orderBy('updated_at', 'desc')
+      .limit(200);
+  }
+
+  async findById(id: string): Promise<Assignment | undefined> {
+    return await this.knex<Assignment>('assignments')
+      .select('*')
+      .where({ id })
+      .first();
+  }
+
   async create(dto: CreateAssignmentDto): Promise<Assignment> {
     const row = {
       level_id: dto.levelId,

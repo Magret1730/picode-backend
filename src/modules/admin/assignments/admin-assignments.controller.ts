@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,6 +17,16 @@ import { CreateAssignmentDto, UpdateAssignmentDto } from './assignment.dto';
 @UseGuards(AdminGuard)
 export class AdminAssignmentsController {
   constructor(private readonly assignments: AdminAssignmentsService) {}
+
+  @Get()
+  async list() {
+    return await this.assignments.list();
+  }
+
+  @Get(':id')
+  async getById(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.assignments.getById(id);
+  }
 
   @Post()
   async create(@Body() body: CreateAssignmentDto) {

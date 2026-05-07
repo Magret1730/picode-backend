@@ -6,6 +6,16 @@ import type { CreateClassworkDto, UpdateClassworkDto } from './classwork.dto';
 export class AdminClassworksService {
   constructor(private readonly repo: AdminClassworksRepository) {}
 
+  async list() {
+    return await this.repo.list();
+  }
+
+  async getById(id: string) {
+    const cw = await this.repo.findById(id);
+    if (!cw) throw new NotFoundException('Classwork not found');
+    return cw;
+  }
+
   async create(dto: CreateClassworkDto) {
     return await this.repo.create(dto);
   }

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,6 +17,16 @@ import { CreateLessonDto, UpdateLessonDto } from './lesson.dto';
 @UseGuards(AdminGuard)
 export class AdminLessonsController {
   constructor(private readonly lessons: AdminLessonsService) {}
+
+  @Get()
+  async list() {
+    return await this.lessons.list();
+  }
+
+  @Get(':id')
+  async getById(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.lessons.getById(id);
+  }
 
   @Post()
   async create(@Body() body: CreateLessonDto) {

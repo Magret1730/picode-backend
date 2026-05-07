@@ -8,6 +8,20 @@ import type { CreateClassworkDto, UpdateClassworkDto } from './classwork.dto';
 export class AdminClassworksRepository {
   constructor(@Inject(KNEX) private readonly knex: Knex) {}
 
+  async list(): Promise<Classwork[]> {
+    return await this.knex<Classwork>('classworks')
+      .select('*')
+      .orderBy('updated_at', 'desc')
+      .limit(200);
+  }
+
+  async findById(id: string): Promise<Classwork | undefined> {
+    return await this.knex<Classwork>('classworks')
+      .select('*')
+      .where({ id })
+      .first();
+  }
+
   async create(dto: CreateClassworkDto): Promise<Classwork> {
     const row = {
       lesson_id: dto.lessonId,

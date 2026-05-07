@@ -8,6 +8,17 @@ import type { CreateLessonDto, UpdateLessonDto } from './lesson.dto';
 export class AdminLessonsRepository {
   constructor(@Inject(KNEX) private readonly knex: Knex) {}
 
+  async list(): Promise<Lesson[]> {
+    return await this.knex<Lesson>('lessons')
+      .select('*')
+      .orderBy('updated_at', 'desc')
+      .limit(200);
+  }
+
+  async findById(id: string): Promise<Lesson | undefined> {
+    return await this.knex<Lesson>('lessons').select('*').where({ id }).first();
+  }
+
   async create(dto: CreateLessonDto): Promise<Lesson> {
     const row = {
       level_id: dto.levelId,

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,6 +17,16 @@ import { CreateClassworkDto, UpdateClassworkDto } from './classwork.dto';
 @UseGuards(AdminGuard)
 export class AdminClassworksController {
   constructor(private readonly classworks: AdminClassworksService) {}
+
+  @Get()
+  async list() {
+    return await this.classworks.list();
+  }
+
+  @Get(':id')
+  async getById(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.classworks.getById(id);
+  }
 
   @Post()
   async create(@Body() body: CreateClassworkDto) {

@@ -6,6 +6,16 @@ import type { CreateLessonDto, UpdateLessonDto } from './lesson.dto';
 export class AdminLessonsService {
   constructor(private readonly repo: AdminLessonsRepository) {}
 
+  async list() {
+    return await this.repo.list();
+  }
+
+  async getById(id: string) {
+    const lesson = await this.repo.findById(id);
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    return lesson;
+  }
+
   async create(dto: CreateLessonDto) {
     return await this.repo.create(dto);
   }
