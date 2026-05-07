@@ -133,6 +133,12 @@ npm test
 
 - `GET /health`
 
+### Auth (MVP)
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (requires `Authorization: Bearer <token>`)
+
 ### Courses / content
 
 - `GET /courses`

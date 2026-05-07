@@ -11,6 +11,7 @@ import { AssignmentsModule } from './modules/assignments/assignments.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { UsersModule } from './modules/users/users.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AdminModule } from './modules/admin/admin.module';
     DatabaseModule,
     HealthModule,
     SubmissionsModule,
+    AuthModule,
     UsersModule,
     CoursesModule,
     LevelsModule,
