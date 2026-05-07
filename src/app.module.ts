@@ -10,6 +10,7 @@ import { ClassworksModule } from './modules/classworks/classworks.module';
 import { AssignmentsModule } from './modules/assignments/assignments.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { UsersModule } from './modules/users/users.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './modules/users/users.module';
     ClassworksModule,
     AssignmentsModule,
     ProgressModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

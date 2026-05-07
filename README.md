@@ -38,6 +38,25 @@ npm run start:dev
 
 - `GET /health` returns `{ ok: true/false, db: 'up'|'down', durationMs }`
 
+## Admin (MVP)
+
+Admin endpoints are protected by a simple header check.
+
+- **Header**: `X-Admin-Key: <ADMIN_KEY>`
+- **Env**: `ADMIN_KEY` (defaults to `dev-admin`)
+
+Endpoints:
+
+- `POST /admin/lessons`
+- `PUT /admin/lessons/:id`
+- `DELETE /admin/lessons/:id`
+- `POST /admin/classworks`
+- `PUT /admin/classworks/:id`
+- `DELETE /admin/classworks/:id`
+- `POST /admin/assignments`
+- `PUT /admin/assignments/:id`
+- `DELETE /admin/assignments/:id`
+
 ## Submissions
 
 Run checks and save a submission:
