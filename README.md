@@ -60,3 +60,17 @@ MVP tables:
 - `submissions`
 - `progress`
 
+## Migrations & seeds
+
+Run migrations:
+
+```bash
+npm run migration:run
+```
+
+Seed courses + levels (MVP only):
+
+```bash
+npm run seed:run
+```
+

@@ -15,7 +15,8 @@ const config: Knex.Config = {
     port: Number(requireEnv('DATABASE_PORT')),
     database: requireEnv('DATABASE_NAME'),
     user: requireEnv('DATABASE_USER'),
-    password: requireEnv('DATABASE_PASSWORD'),
+    password: process.env.DATABASE_PASSWORD || "",
+    // password: requireEnv('DATABASE_PASSWORD'),
     ssl:
       (process.env.DATABASE_SSL ?? 'false').toLowerCase() === 'true'
         ? { rejectUnauthorized: false }

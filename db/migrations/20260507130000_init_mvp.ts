@@ -5,17 +5,34 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('users', (t) => {
     t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+    t.string('name', 255).notNullable();
     t.string('email', 255).notNullable().unique();
     t.string('password_hash', 255).notNullable();
-    t.string('display_name', 255).notNullable();
-    t.timestamps(true, true);
+    t.string('role', 16).notNullable().defaultTo('student');
+    t.string('age_group', 32).notNullable();
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
   });
+
+  await knex.raw(`
+    alter table users
+    add constraint users_role_check
+    check (role in ('student', 'admin'))
+  `);
 
   await knex.schema.createTable('courses', (t) => {
     t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.string('slug', 64).notNullable().unique();
     t.string('title', 255).notNullable();
-    t.timestamps(true, true);
+    t.string('slug', 64).notNullable().unique();
+    t.text('description').notNullable().defaultTo('');
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
   });
 
   await knex.schema.createTable('levels', (t) => {
@@ -26,9 +43,15 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('courses')
       .onDelete('CASCADE');
     t.string('title', 255).notNullable();
-    t.integer('position').notNullable();
-    t.timestamps(true, true);
-    t.unique(['course_id', 'position']);
+    t.string('slug', 64).notNullable();
+    t.integer('order_index').notNullable();
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.unique(['course_id', 'order_index']);
+    t.unique(['course_id', 'slug']);
   });
 
   await knex.schema.createTable('lessons', (t) => {
@@ -39,10 +62,18 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('levels')
       .onDelete('CASCADE');
     t.string('title', 255).notNullable();
-    t.integer('position').notNullable();
-    t.text('content').nullable();
-    t.timestamps(true, true);
-    t.unique(['level_id', 'position']);
+    t.string('slug', 64).notNullable();
+    t.text('goal').notNullable().defaultTo('');
+    t.text('explanation').notNullable().defaultTo('');
+    t.text('example_code').notNullable().defaultTo('');
+    t.integer('order_index').notNullable();
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.unique(['level_id', 'order_index']);
+    t.unique(['level_id', 'slug']);
   });
 
   await knex.schema.createTable('classworks', (t) => {
@@ -53,42 +84,67 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('lessons')
       .onDelete('CASCADE');
     t.string('title', 255).notNullable();
-    t.text('prompt').notNullable();
-    t.integer('position').notNullable();
-    t.timestamps(true, true);
-    t.unique(['lesson_id', 'position']);
+    t.text('instructions').notNullable();
+    t.jsonb('requirements').notNullable().defaultTo(knex.raw(`'{}'::jsonb`));
+    t.text('starter_code').notNullable().defaultTo('');
+    t.jsonb('test_config').notNullable().defaultTo(knex.raw(`'{}'::jsonb`));
+    t.integer('order_index').notNullable();
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.unique(['lesson_id', 'order_index']);
   });
 
   await knex.schema.createTable('assignments', (t) => {
     t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.uuid('lesson_id')
+    t.uuid('level_id')
       .notNullable()
       .references('id')
-      .inTable('lessons')
+      .inTable('levels')
       .onDelete('CASCADE');
     t.string('title', 255).notNullable();
-    t.text('prompt').notNullable();
-    t.timestamps(true, true);
+    t.text('instructions').notNullable();
+    t.jsonb('requirements').notNullable().defaultTo(knex.raw(`'{}'::jsonb`));
+    t.text('starter_code').notNullable().defaultTo('');
+    t.jsonb('test_config').notNullable().defaultTo(knex.raw(`'{}'::jsonb`));
+    t.integer('order_index').notNullable();
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.unique(['level_id', 'order_index']);
   });
 
   await knex.schema.createTable('submissions', (t) => {
     t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.uuid('assignment_id')
-      .notNullable()
-      .references('id')
-      .inTable('assignments')
-      .onDelete('CASCADE');
     t.uuid('user_id')
       .notNullable()
       .references('id')
       .inTable('users')
       .onDelete('CASCADE');
-    t.text('content').notNullable();
-    t.string('status', 32).notNullable().defaultTo('submitted');
-    t.integer('score').nullable();
-    t.timestamp('submitted_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
-    t.timestamps(true, true);
-    t.index(['assignment_id', 'user_id']);
+    t.uuid('classwork_id')
+      .nullable()
+      .references('id')
+      .inTable('classworks')
+      .onDelete('SET NULL');
+    t.uuid('assignment_id')
+      .nullable()
+      .references('id')
+      .inTable('assignments')
+      .onDelete('SET NULL');
+    t.text('submitted_code').notNullable();
+    t.jsonb('test_results').notNullable().defaultTo(knex.raw(`'{}'::jsonb`));
+    t.boolean('passed').notNullable().defaultTo(false);
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.index(['user_id', 'classwork_id']);
+    t.index(['user_id', 'assignment_id']);
   });
 
   await knex.schema.createTable('progress', (t) => {
@@ -98,16 +154,42 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('users')
       .onDelete('CASCADE');
-    t.uuid('lesson_id')
+    t.uuid('course_id')
       .notNullable()
       .references('id')
-      .inTable('lessons')
+      .inTable('courses')
       .onDelete('CASCADE');
-    t.string('status', 32).notNullable().defaultTo('not_started');
-    t.timestamp('completed_at', { useTz: true }).nullable();
-    t.timestamps(true, true);
-    t.unique(['user_id', 'lesson_id']);
+    t.uuid('level_id')
+      .notNullable()
+      .references('id')
+      .inTable('levels')
+      .onDelete('CASCADE');
+    t.uuid('lesson_id')
+      .nullable()
+      .references('id')
+      .inTable('lessons')
+      .onDelete('SET NULL');
+    t.string('status', 32).notNullable();
+    t.integer('xp').notNullable().defaultTo(0);
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    t
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+    t.index(['user_id', 'course_id']);
+    t.index(['user_id', 'level_id']);
+    t.index(['user_id', 'lesson_id']);
   });
+
+  await knex.raw(`
+    alter table submissions
+    add constraint submissions_one_target_check
+    check (
+      (case when classwork_id is null then 0 else 1 end) +
+      (case when assignment_id is null then 0 else 1 end)
+      = 1
+    )
+  `);
 }
 
 export async function down(knex: Knex): Promise<void> {
