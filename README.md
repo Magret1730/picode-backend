@@ -38,6 +38,47 @@ npm run start:dev
 
 - `GET /health` returns `{ ok: true/false, db: 'up'|'down', durationMs }`
 
+## Submissions
+
+Run checks and save a submission:
+
+- `POST /submissions/run-tests`
+
+Request body:
+
+```json
+{
+  "userId": "uuid",
+  "classworkId": "uuid",
+  "submittedCode": "<!doctype html>..."
+}
+```
+
+or
+
+```json
+{
+  "userId": "uuid",
+  "assignmentId": "uuid",
+  "submittedCode": "<!doctype html>..."
+}
+```
+
+Response:
+
+```json
+{
+  "passed": false,
+  "results": [
+    {
+      "name": "Heading exists",
+      "passed": true,
+      "message": "Great job! Heading exists."
+    }
+  ]
+}
+```
+
 ## Scripts
 
 - `npm run start:dev`: run in watch mode
