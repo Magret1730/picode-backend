@@ -10,7 +10,7 @@ type RunResult = {
 @Injectable()
 export class SubmissionTestRunnerService {
   run(submittedCode: string, testConfig: TestConfig): RunResult {
-    const safeHtml = sanitizeSubmittedHtml(submittedCode);
+    const safeHtml = sanitizeSubmittedHtml(normalizeHtmlForParsing(submittedCode));
     const dom = new JSDOM(safeHtml, {
       runScripts: 'outside-only',
       resources: 'usable',
@@ -47,17 +47,23 @@ export class SubmissionTestRunnerService {
     if (!('rule' in check) || !check.rule) {
       const selector = check.selector ?? '';
       const exists = selector ? Boolean(document.querySelector(selector)) : false;
-      return {
-        name,
-        passed: exists,
-        message: exists
+
+      const contentAware = evaluateContentAwareExistence(selector, document);
+      const passed = contentAware?.passed ?? exists;
+      const message =
+        contentAware?.message ??
+        (exists
           ? kidSuccess(name)
           : kidTryAgain(
               name,
               selector
                 ? `I couldn't find a \`${selector}\` element.`
                 : "I couldn't find what I was looking for.",
-            ),
+            ));
+      return {
+        name,
+        passed,
+        message,
       };
     }
 
@@ -65,6 +71,20 @@ export class SubmissionTestRunnerService {
       case 'attr': {
         const el = document.querySelector(check.selector);
         const ok = Boolean(el?.getAttribute(check.attr)?.trim());
+
+        // Extra quality: images must have meaningful alt text.
+        if (check.selector === 'img' && check.attr === 'alt') {
+          const alt = el?.getAttribute('alt') ?? '';
+          const meaningful = alt.trim().length > 0;
+          return {
+            name,
+            passed: meaningful,
+            message: meaningful
+              ? kidSuccess(name)
+              : kidTryAgain(name, 'Almost there! Describe your image using alt text.'),
+          };
+        }
+
         return {
           name,
           passed: ok,
@@ -75,13 +95,38 @@ export class SubmissionTestRunnerService {
       }
 
       case 'count': {
-        const count = document.querySelectorAll(check.selector).length;
+        const nodes = Array.from(document.querySelectorAll(check.selector));
+        const count = nodes.length;
         const ok =
           typeof check.equals === 'number'
             ? count === check.equals
             : typeof check.gte === 'number'
               ? count >= check.gte
               : count > 0;
+
+        // Content quality: for text elements, ensure the required count is non-empty.
+        if (ok && (check.selector === 'p' || check.selector === 'li')) {
+          const required =
+            typeof check.equals === 'number'
+              ? check.equals
+              : typeof check.gte === 'number'
+                ? check.gte
+                : 1;
+          const nonEmptyCount = nodes.filter((n) =>
+            (n.textContent ?? '').trim().length > 0,
+          ).length;
+          const contentOk = nonEmptyCount >= required;
+          const hint =
+            check.selector === 'p'
+              ? 'Almost there! Add a sentence inside your paragraph.'
+              : 'Almost there! Add words inside your list item.';
+          return {
+            name,
+            passed: contentOk,
+            message: contentOk ? kidSuccess(name) : kidTryAgain(name, hint),
+          };
+        }
+
         const target =
           typeof check.equals === 'number'
             ? `exactly ${check.equals}`
@@ -168,6 +213,92 @@ export class SubmissionTestRunnerService {
   }
 }
 
+function evaluateContentAwareExistence(
+  selector: string,
+  document: Document,
+): { passed: boolean; message: string } | null {
+  if (!selector) return null;
+
+  if (selector === 'title') {
+    const hasTitleEl = Boolean(document.querySelector('title'));
+    const ok = document.title.trim().length > 0;
+    if (!hasTitleEl) {
+      return { passed: false, message: 'Almost there! Add a page title.' };
+    }
+    return {
+      passed: ok,
+      message: ok
+        ? 'Great! Your page has a title.'
+        : 'Almost there! Add a page title.',
+    };
+  }
+
+  if (selector === 'h1' || selector === 'h2') {
+    const el = document.querySelector(selector);
+    const ok = Boolean(el && (el.textContent ?? '').trim().length > 0);
+    const hint =
+      selector === 'h1'
+        ? 'Almost there! Add words inside your main heading.'
+        : 'Almost there! Add words inside your smaller heading.';
+    return { passed: ok, message: ok ? 'Great! Your heading has words.' : hint };
+  }
+
+  if (selector === 'p') {
+    const el = document.querySelector('p');
+    const ok = Boolean(el && (el.textContent ?? '').trim().length > 0);
+    return {
+      passed: ok,
+      message: ok
+        ? 'Great! Your paragraph has words.'
+        : 'Almost there! Add a sentence inside your paragraph.',
+    };
+  }
+
+  if (selector === 'li') {
+    const el = document.querySelector('li');
+    const ok = Boolean(el && (el.textContent ?? '').trim().length > 0);
+    return {
+      passed: ok,
+      message: ok
+        ? 'Great! Your list item has words.'
+        : 'Almost there! Add words inside your list item.',
+    };
+  }
+
+  if (selector === 'a') {
+    const el = document.querySelector('a');
+    const hrefOk = Boolean(el?.getAttribute('href')?.trim());
+    const textOk = Boolean((el?.textContent ?? '').trim().length > 0);
+    const ok = Boolean(el && hrefOk && textOk);
+    return {
+      passed: ok,
+      message: ok
+        ? 'Great! Your link looks good.'
+        : 'Almost there! Add link text and make sure it has an href.',
+    };
+  }
+
+  if (selector === 'img') {
+    const el = document.querySelector('img');
+    const srcOk = Boolean(el?.getAttribute('src')?.trim());
+    const alt = el?.getAttribute('alt') ?? '';
+    const altOk = alt.trim().length > 0;
+    const ok = Boolean(el && srcOk && altOk);
+    return {
+      passed: ok,
+      message: ok
+        ? 'Great! Your image has src and alt text.'
+        : !el
+          ? 'Almost there! Add an image.'
+          : !srcOk
+            ? 'Almost there! Add a src to your image.'
+            : 'Almost there! Describe your image using alt text.',
+    };
+  }
+
+  return null;
+}
+
 function sanitizeSubmittedHtml(html: string): string {
   // Safety: remove scripts + event handler attributes; we only parse DOM.
   const withoutScripts = html.replace(
@@ -176,6 +307,20 @@ function sanitizeSubmittedHtml(html: string): string {
   );
   // Remove inline event handlers like onclick="..."
   return withoutScripts.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '');
+}
+
+function normalizeHtmlForParsing(input: string): string {
+  const trimmed = input.trim();
+  const looksLikeFullDoc =
+    /<html[\s>]/i.test(trimmed) ||
+    /<!doctype[\s>]/i.test(trimmed) ||
+    /<head[\s>]/i.test(trimmed) ||
+    /<body[\s>]/i.test(trimmed);
+
+  if (looksLikeFullDoc) return trimmed;
+
+  // Wrap partial snippets so selectors still work consistently.
+  return `<!doctype html><html><head></head><body>${trimmed}</body></html>`;
 }
 
 type StyleIndex = Map<string, Map<string, string>>;

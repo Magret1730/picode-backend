@@ -6,6 +6,10 @@ import { KNEX } from './knex.provider';
 export class DatabaseService implements OnModuleDestroy {
   constructor(@Inject(KNEX) private readonly knex: Knex) {}
 
+  get client(): Knex {
+    return this.knex;
+  }
+
   async ping(): Promise<boolean> {
     await this.knex.raw('select 1 as ok');
     return true;

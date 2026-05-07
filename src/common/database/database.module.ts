@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-import { DatabaseService } from './database.service';
 import { knexProvider } from './knex.provider';
+import { DatabaseService } from './database.service';
 
 @Global()
 @Module({

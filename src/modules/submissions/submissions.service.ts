@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Knex } from 'knex';
-import { KNEX } from '../../database/knex.provider';
+import { KNEX } from '../../common/database/knex.provider';
 import { SubmissionTestRunnerService } from './test-runner/submission-test-runner.service';
 import type { FriendlyResult, TestConfig } from './test-runner/types';
 
@@ -34,8 +34,15 @@ export class SubmissionsService {
         'Provide exactly one of classworkId or assignmentId',
       );
     }
+    if (classworkId && !isUuid(classworkId)) {
+      throw new BadRequestException('classworkId must be a valid UUID');
+    }
+    if (assignmentId && !isUuid(assignmentId)) {
+      throw new BadRequestException('assignmentId must be a valid UUID');
+    }
 
     return await this.knex.transaction(async (trx) => {
+      const resolvedUserId = await resolveUserId(trx, userId);
       const target = classworkId
         ? await trx('classworks')
             .select('id', 'lesson_id', 'test_config')
@@ -54,7 +61,7 @@ export class SubmissionsService {
       const { passed, results } = this.runner.run(submittedCode, testConfig);
 
       await trx('submissions').insert({
-        user_id: userId,
+        user_id: resolvedUserId,
         classwork_id: classworkId ?? null,
         assignment_id: assignmentId ?? null,
         submitted_code: submittedCode,
@@ -64,7 +71,7 @@ export class SubmissionsService {
 
       if (passed) {
         await this.upsertProgress(trx, {
-          userId,
+          userId: resolvedUserId,
           classworkId,
           assignmentId,
         });
@@ -126,6 +133,47 @@ export class SubmissionsService {
       });
     }
   }
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+async function resolveUserId(trx: Knex, input: string): Promise<string> {
+  if (input === 'demo-user') {
+    const existing = await trx('users')
+      .select('id')
+      .where({ email: 'demo@picode.local' })
+      .first();
+    if (existing?.id) return String(existing.id);
+
+    await trx('users')
+      .insert({
+        name: 'Demo User',
+        email: 'demo@picode.local',
+        password_hash: 'demo',
+        role: 'student',
+        age_group: 'kid',
+      })
+      .onConflict('email')
+      .ignore();
+
+    const created = await trx('users')
+      .select('id')
+      .where({ email: 'demo@picode.local' })
+      .first();
+    if (!created?.id) {
+      throw new BadRequestException('Could not create demo user');
+    }
+    return String(created.id);
+  }
+
+  if (!isUuid(input)) {
+    throw new BadRequestException('userId must be a valid UUID');
+  }
+  return input;
 }
 
 async function upsertProgressRow(
