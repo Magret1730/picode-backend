@@ -155,7 +155,7 @@ async function resolveUserId(trx: Knex, input: string): Promise<string> {
         email: 'demo@picode.local',
         password_hash: 'demo',
         role: 'student',
-        age_group: 'kid',
+        age_group: null,
       })
       .onConflict('email')
       .ignore();

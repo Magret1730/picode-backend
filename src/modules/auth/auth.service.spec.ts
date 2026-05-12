@@ -25,7 +25,7 @@ describe('AuthService', () => {
           email: input.email,
           password_hash: input.passwordHash,
           role: input.role,
-          age_group: input.ageGroup,
+          age_group: input.ageGroup ?? null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -39,10 +39,10 @@ describe('AuthService', () => {
       name: 'Demo Student',
       email: 'student@example.com',
       password: 'password123',
-      ageGroup: '8-10',
     });
 
     expect(res.user.email).toBe('student@example.com');
+    expect(res.user.ageGroup).toBeNull();
     expect(res.user.role).toBe('student');
     expect(res.token).toBe('jwt-token');
     expect(createdPasswordHash).toBeTruthy();
@@ -58,7 +58,7 @@ describe('AuthService', () => {
           email: 'student@example.com',
           password_hash: 'hash',
           role: 'student',
-          age_group: '8-10',
+          age_group: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }) as DbUser,
@@ -70,7 +70,6 @@ describe('AuthService', () => {
         name: 'Demo Student',
         email: 'student@example.com',
         password: 'password123',
-        ageGroup: '8-10',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -85,7 +84,7 @@ describe('AuthService', () => {
           email: 'student@example.com',
           password_hash: hash,
           role: 'student',
-          age_group: '8-10',
+          age_group: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }) as DbUser,
@@ -110,7 +109,7 @@ describe('AuthService', () => {
           email: 'student@example.com',
           password_hash: hash,
           role: 'student',
-          age_group: '8-10',
+          age_group: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }) as DbUser,

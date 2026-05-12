@@ -27,7 +27,6 @@ export class AuthService {
       email: dto.email,
       passwordHash,
       role: 'student',
-      ageGroup: dto.ageGroup,
     });
 
     const user = toPublicUser(created);

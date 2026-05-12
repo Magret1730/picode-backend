@@ -8,7 +8,7 @@ export type DbUser = {
   email: string;
   password_hash: string;
   role: 'student' | 'admin';
-  age_group: string;
+  age_group: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -18,7 +18,7 @@ export type PublicUser = {
   name: string;
   email: string;
   role: 'student' | 'admin';
-  ageGroup: string;
+  ageGroup: string | null;
 };
 
 @Injectable()
@@ -41,14 +41,14 @@ export class AuthRepository {
     email: string;
     passwordHash: string;
     role: 'student' | 'admin';
-    ageGroup: string;
+    ageGroup?: string | null;
   }): Promise<DbUser> {
     const row = {
       name: input.name,
       email: input.email,
       password_hash: input.passwordHash,
       role: input.role,
-      age_group: input.ageGroup,
+      age_group: input.ageGroup ?? null,
       created_at: this.knex.fn.now(),
       updated_at: this.knex.fn.now(),
     };

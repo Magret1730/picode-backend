@@ -13,9 +13,5 @@ export class RegisterDto {
   @MinLength(8)
   @MaxLength(72)
   password!: string;
-
-  @IsString()
-  @MaxLength(32)
-  ageGroup!: string;
 }
 
